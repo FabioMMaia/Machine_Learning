@@ -1,1 +1,7 @@
-# Machine_Learning
+# Machine Learning
+
+I created this section to illustrate some applications of Machine Learning using Python as programming language.
+
+They are divided in the following sections:
+- Regression Algorithms
+- Classifications Algorithms
