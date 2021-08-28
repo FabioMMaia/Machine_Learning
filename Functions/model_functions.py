@@ -2,9 +2,14 @@
 
 from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, median_absolute_error, r2_score
 from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score, roc_auc_score, log_loss
-
 from sklearn.exceptions import NotFittedError
 
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import plot_confusion_matrix
+
+
+import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
 
 
@@ -19,7 +24,7 @@ def calculate_metrics(y_true, y_pred, verbose, mode):
         metrics['mslogerror']=mean_squared_log_error(y_true, y_pred)
         metrics['mae']=mean_absolute_error(y_true, y_pred) 
         metrics['mse']=mean_squared_error(y_true, y_pred)
-        metrics['rmse'] = round(np.sqrt(metrics['mse']),4)
+        metrics['rmse'] = np.sqrt(metrics['mse'])
         metrics['median_abs_error']=median_absolute_error(y_true, y_pred)
         metrics['r2']=r2_score(y_true, y_pred)
 
@@ -29,7 +34,7 @@ def calculate_metrics(y_true, y_pred, verbose, mode):
             print('mean_squared_log_error: ', round(metrics['mslogerror'],4))
             print('MAE: ', round(metrics['mae'],4))
             print('MSE: ', round(metrics['mse'],4))
-            print('RMSE: ', round(np.sqrt(metrics['rmse']),4))
+            print('RMSE: ', round(metrics['rmse'],4))
             print('Median Absolute Error: ', round(metrics['median_abs_error'],4))
             print('r2: ', round(metrics['r2'],4))
 
@@ -84,3 +89,39 @@ def metrics(model, mode, X_train, X_test, y_train, y_test,verbose=True):
 
     return metrics
 
+def plot_decision_function(classifier, X,y, proba=False, figsize=(20,10)):
+
+    x1_axis,x2_axis = X.columns[0], X.columns[1]
+    target=y.name
+
+    fig, axis = plt.subplots(1,1, figsize=figsize)
+
+    X1, X2 = np.meshgrid(np.arange(start= X[x1_axis].min() -1, stop= X[x1_axis].max() +1, step = 0.01),
+                         np.arange(start= X[x2_axis].min()-1, stop= X[x2_axis].max() +1, step = 0.01))
+
+
+    if (proba):
+        predictions = classifier.predict_proba(np.array([X1.ravel(), X2.ravel()]).T)[:,1].reshape(X1.shape)
+    else:
+        predictions = classifier.predict(np.array([X1.ravel(), X2.ravel()]).T).reshape(X1.shape)
+
+    # plota 
+    all = pd.concat([X, y], axis=1)
+    all.plot(x = x1_axis, y =x2_axis, c=target, kind = 'scatter', cmap = 'Spectral', s=100, alpha =0.6, ax=axis)
+    axis.contourf(X1,X2, predictions, cmap = 'Spectral', alpha = 0.2)
+    axis.set_title('Superfície de Decisão')
+    plt.show()
+    
+def plotta_cms(classifier, X_train, X_test, y_train, y_test, labels):
+
+    fig, ax = plt.subplots(1,2,figsize=(12,12))
+
+    plot_confusion_matrix(classifier, X_test, y_test, 
+                        display_labels=labels, 
+                        cmap =plt.cm.Blues,ax = ax[0],colorbar=False);
+    ax[0].set_title('Teste');
+    plot_confusion_matrix(classifier, X_train, y_train, 
+                        display_labels=labels, 
+                        cmap =plt.cm.Blues, ax= ax[1],colorbar=False);
+    ax[1].set_title('Treino');
+    plt.tight_layout()
